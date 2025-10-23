@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+/* Tailwind resets */
+
+body {
+  background: #e4e3e3;
+  color: #171717;
+  font-family: var(--font-firago), "Segoe UI", system-ui, -apple-system,
+    sans-serif;
+}
