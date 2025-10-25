@@ -1,0 +1,27 @@
+/* [project]/src/app/firago_5c4d3490.module.css [app-client] (css) */
+@font-face {
+  font-family: firaGo;
+  src: url("../media/FiraGO_ExtraBold-s.p.93eb35c5.otf") format("opentype");
+  font-display: swap;
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: firaGo Fallback;
+  src: local(Arial);
+  ascent-override: 90.08%;
+  descent-override: 25.53%;
+  line-gap-override: 0.0%;
+  size-adjust: 103.8%;
+}
+
+.firago_5c4d3490-module__WkY6Ya__className {
+  font-family: firaGo, firaGo Fallback;
+  font-weight: 800;
+}
+
+.firago_5c4d3490-module__WkY6Ya__variable {
+  --font-firago: "firaGo", "firaGo Fallback";
+}
+
+/*# sourceMappingURL=src_app_firago_5c4d3490_module_css_bad6b30c._.single.css.map*/

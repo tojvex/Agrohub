@@ -1,0 +1,13 @@
+{
+  "app": {
+    "[project]/src/app/_not-found/page": [
+      "static/media/FiraGO_ExtraBold-s.p.93eb35c5.otf"
+    ],
+    "[project]/src/app/page": [
+      "static/media/FiraGO_ExtraBold-s.p.93eb35c5.otf"
+    ]
+  },
+  "appUsingSizeAdjust": true,
+  "pages": {},
+  "pagesUsingSizeAdjust": false
+}

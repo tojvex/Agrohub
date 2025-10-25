@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image, { type StaticImageData } from "next/image";
 
 import Logo from "@/media/Logo.png";
@@ -86,6 +86,8 @@ type HeroItem = {
     points: string[];
   };
 };
+
+type HeroItemWithCard = HeroItem & { card: NonNullable<HeroItem["card"]> };
 
 const heroItems: HeroItem[] = [
   {
@@ -255,10 +257,73 @@ const heroItems: HeroItem[] = [
 ];
 
 export default function Home() {
-  const [activeCard, setActiveCard] = useState<HeroItem | null>(null);
+  const [activeCard, setActiveCard] = useState<HeroItemWithCard | null>(null);
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [pendingCard, setPendingCard] = useState<HeroItemWithCard | null>(null);
   const activeCardData = activeCard?.card;
   const isDarkTheme = theme === "dark";
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (activeCardData) {
+      previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+      dialogRef.current?.focus();
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    return undefined;
+  }, [activeCardData]);
+
+  useEffect(() => {
+    if (!activeCardData && previouslyFocusedRef.current) {
+      previouslyFocusedRef.current.focus();
+      previouslyFocusedRef.current = null;
+    }
+  }, [activeCardData]);
+
+  useEffect(() => {
+    if (!pendingCard?.card) {
+      return;
+    }
+
+    const currentCard = pendingCard;
+    const resolve = () => {
+      setActiveCard(currentCard);
+      setPendingCard(null);
+    };
+
+    const image = new window.Image();
+    image.src = currentCard.card.image.src;
+
+    if (image.complete) {
+      resolve();
+      return;
+    }
+
+    image.addEventListener("load", resolve);
+    image.addEventListener("error", resolve);
+
+    return () => {
+      image.removeEventListener("load", resolve);
+      image.removeEventListener("error", resolve);
+    };
+  }, [pendingCard]);
+
+  const handleHeroSelection = (item: HeroItem) => {
+    if (!item.card) {
+      return;
+    }
+
+    setPendingCard(item as HeroItemWithCard);
+  };
+
+  const handleCloseModal = () => {
+    setActiveCard(null);
+    setPendingCard(null);
+  };
 
   const logoElement = (
     <Image src={Logo} alt="Jobs supermarket logo" className="h-12 w-auto" priority />
@@ -268,7 +333,7 @@ export default function Home() {
     <button
       type="button"
       onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
-      className="cursor-pointer rounded-full border-0 bg-transparent p-0 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+      className="cursor-pointer rounded-full border-0 bg-transparent p-0 transition focus-visible:outline focus-visible:outline-offset-2 focus-visible:outline-white"
       aria-label={isDarkTheme ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={isDarkTheme}
     >
@@ -290,14 +355,14 @@ export default function Home() {
         </div>
         <div className="hidden items-center justify-evenly gap-4 px-8 py-5 lg:flex">
           <div className="flex items-center justify-center">{logoElement}</div>
-          <h1 className="max-w-[38rem] text-center text-3xl font-semibold tracking-wide">
+          <h1 className="max-w-152 text-center text-3xl font-semibold tracking-wide">
             {HEADLINE}
           </h1>
           <div className="flex items-center justify-center gap-4">
             <button
               type="button"
               onClick={() => setTheme("light")}
-              className={`cursor-pointer rounded-full border-0 bg-transparent p-0 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isDarkTheme ? "opacity-60" : "opacity-100"}`}
+              className={`cursor-pointer rounded-full border-0 bg-transparent p-0 transition  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isDarkTheme ? "opacity-60" : "opacity-100"}`}
               aria-label="Switch to light mode"
               aria-pressed={!isDarkTheme}
             >
@@ -306,7 +371,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setTheme("dark")}
-              className={`cursor-pointer rounded-full border-0 bg-transparent p-0 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isDarkTheme ? "opacity-100" : "opacity-60"}`}
+              className={`cursor-pointer rounded-full border-0 bg-transparent p-0 transition  focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${isDarkTheme ? "opacity-100" : "opacity-60"}`}
               aria-label="Switch to dark mode"
               aria-pressed={isDarkTheme}
             >
@@ -324,7 +389,7 @@ export default function Home() {
             : { background: "#dedddd" }
         }
       >
-        <div className="flex w-full max-w-[1280px] flex-col items-stretch lg:items-center">
+        <div className="flex w-full max-w-7xl flex-col items-stretch lg:items-center">
           <div className="px-4 pt-5 pb-3 lg:hidden">
             <h1
               className={`text-center text-2xl font-bold tracking-wide leading-tight sm:text-3xl md:text-4xl ${
@@ -342,7 +407,7 @@ export default function Home() {
                 : { background: "#dedddd" }
             }
           >
-            <div className="relative aspect-[1365/768] w-full">
+            <div className="relative aspect-1365/768 w-full">
               {heroItems.map((item) => {
                 const baseImage =
                   isDarkTheme && item.darkSrc ? item.darkSrc : item.lightSrc;
@@ -355,7 +420,7 @@ export default function Home() {
                   <button
                     key={item.id}
                     type="button"
-                    onClick={() => item.card && setActiveCard(item)}
+                    onClick={() => handleHeroSelection(item)}
                     className={`group absolute ${item.desktopClass} border-0 bg-transparent p-0 ${item.card ? "cursor-pointer" : "cursor-default"}`}
                     aria-label={
                       item.card
@@ -383,7 +448,7 @@ export default function Home() {
           </div>
 
           <div
-            className="relative mt-0 w-full aspect-[9/16] lg:hidden"
+            className="relative mt-0 w-full aspect-9/16 lg:hidden"
             style={
               isDarkTheme
                 ? { background: "linear-gradient(180deg, #363264 0%, #201C49 100%)" }
@@ -408,13 +473,13 @@ export default function Home() {
                 <button
                   key={`${item.id}-mobile`}
                   type="button"
-                  onClick={() => item.card && setActiveCard(item)}
+                  onClick={() => handleHeroSelection(item)}
                   className={`group absolute ${item.mobileClass} border-0 bg-transparent p-0 ${item.card ? "cursor-pointer" : "cursor-default"}`}
                   aria-label={
-                    item.card
-                      ? `${item.card.heading} ვაკანსიის დეტალები`
-                      : undefined
-                  }
+                      item.card
+                        ? `${item.card.heading} ვაკანსიის დეტალები`
+                        : undefined
+                    }
                   disabled={!item.card}
                 >
                   <Image
@@ -436,13 +501,18 @@ export default function Home() {
           </div>
         </div>
       </main>
-      {activeCardData && (
+        {activeCardData && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setActiveCard(null)}
+          onClick={handleCloseModal}
         >
           <div
-            className="relative w-[min(338px,90vw)]"
+            ref={dialogRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeCardData.heading}
+            className="relative w-[min(338px,90vw)] outline-none"
             onClick={(event) => event.stopPropagation()}
           >
             <Image
@@ -453,13 +523,13 @@ export default function Home() {
             />
             <button
               type="button"
-              onClick={() => setActiveCard(null)}
+              onClick={handleCloseModal}
               className="cursor-pointer absolute right-4 top-4 h-8 w-8 rounded-full border border-transparent bg-transparent"
               aria-label="დახურვა"
             />
             <button
               type="button"
-              className="absolute bottom-4 left-1/2 w-[50%] -translate-x-1/2 rounded-full bg-[#1DA94A] py-3 text-base font-semibold text-white shadow transition hover:bg-[#17853a] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="absolute bottom-4 left-1/2 w-[50%] -translate-x-1/2 rounded-full bg-[#1DA94A] py-3 text-base font-semibold text-white shadow transition hover:bg-[#17853a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               onClick={() => {}}
             >
               გაგზავნა
